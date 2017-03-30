@@ -3,11 +3,11 @@
 #include <stdio.h>
 
 // DEVCFG0
-#pragma config DEBUG = 0 // no debugging
+#pragma config DEBUG = 1 // no debugging
 #pragma config JTAGEN = 0 // no jtag
 #pragma config ICESEL = 11 // use PGED1 and PGEC1
 #pragma config PWP = 111111111 // no write protect
-#pragma config BWP = 0 // no boot write protect
+#pragma config BWP = 1 // no boot write protect
 #pragma config CP = 1 // no code protect
 
 // DEVCFG1
@@ -61,24 +61,23 @@ int main() {
     TRISBbits.TRISB4 = 1;
     LATAbits.LATA4 = 1;
     __builtin_enable_interrupts();
+     
 
     while(1) {
 	    // use _CP0_SET_COUNT(0) and _CP0_GET_COUNT() to test the PIC timing
 		  // remember the core timer runs at half the sysclk
         _CP0_SET_COUNT(0);
         elapsedticks = _CP0_GET_COUNT();
-        button = PORTBbits.RB4;
-        while (button){
+        while (!PORTBbits.RB4){
         LATAbits.LATA4 = 0;
         }
+       
         LATAbits.LATA4 = 1;
-        while(elapsedms <= 1200) {
-            LATAbits.LATA4 = 1;
-            _CP0_SET_COUNT(0);
-        }
-        while(elapsedms <= 1200) {
+        while(_CP0_GET_COUNT() <= 2399) {
+            LATAbits.LATA4 = 1;}
+        _CP0_SET_COUNT(0);
+        while(_CP0_GET_COUNT() <= 2399) {
             LATAbits.LATA4 = 0;
-            _CP0_SET_COUNT(0);
         }
         //printf("elapsedms = %d\n", elapsedms);  
     }
