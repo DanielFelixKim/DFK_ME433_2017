@@ -1,5 +1,6 @@
 #include<xc.h>           // processor SFR definitions
 #include<sys/attribs.h>  // __ISR macro
+#include <stdio.h>
 
 // DEVCFG0
 #pragma config DEBUG = 0 // no debugging
@@ -38,7 +39,8 @@
 
 
 int main() {
-
+    int elapsedticks = 0;
+    int elapsedms = 0;
     __builtin_disable_interrupts();
 
     // set the CP0 CONFIG register to indicate that kseg0 is cacheable (0x3)
@@ -54,12 +56,29 @@ int main() {
     DDPCONbits.JTAGEN = 0;
 
     // do your TRIS and LAT commands here
-    TRISAbits.TRISA4 = 0; 
+    TRISAbits.TRISA4 = 0;
+    TRISBbits.TRISB4 = 1;
     LATAbits.LATA4 = 1;
     __builtin_enable_interrupts();
 
     while(1) {
 	    // use _CP0_SET_COUNT(0) and _CP0_GET_COUNT() to test the PIC timing
 		  // remember the core timer runs at half the sysclk
+        _CP0_SET_COUNT(0);
+        elapsedticks = _CP0_GET_COUNT();
+        elapsedms = elapsedticks * 42;
+        while (!PORTBbits.RB4){
+        LATAbits.LATA4 = 0;
+        }
+        LATAbits.LATA4 = 1;
+        if(elapsedms <= 500000) {
+            LATAbits.LATA4 = 1;    
+        }
+        else {
+            LATAbits.LATA4 = 0; 
+            _CP0_SET_COUNT(0);
+        }
+        printf("elapsedms = %d\n", elapsedms);
+        
     }
 }
