@@ -72,14 +72,14 @@ int main() {
         LATAbits.LATA4 = 0;
         }
         LATAbits.LATA4 = 1;
-        if(elapsedms <= 24000) {
-            LATAbits.LATA4 = 1;    
-        }
-        else {
-            LATAbits.LATA4 = 0; 
+        while(elapsedms <= 12000) {
+            LATAbits.LATA4 = 1;
             _CP0_SET_COUNT(0);
         }
-        printf("elapsedms = %d\n", elapsedms);
-        
+        while(elapsedms <= 12000) {
+            LATAbits.LATA4 = 0;
+            _CP0_SET_COUNT(0);
+        }
+        //printf("elapsedms = %d\n", elapsedms);  
     }
 }
