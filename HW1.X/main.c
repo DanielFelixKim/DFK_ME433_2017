@@ -72,11 +72,11 @@ int main() {
         LATAbits.LATA4 = 0;
         }
         LATAbits.LATA4 = 1;
-        while(elapsedms <= 12000) {
+        while(elapsedms <= 1200) {
             LATAbits.LATA4 = 1;
             _CP0_SET_COUNT(0);
         }
-        while(elapsedms <= 12000) {
+        while(elapsedms <= 1200) {
             LATAbits.LATA4 = 0;
             _CP0_SET_COUNT(0);
         }
