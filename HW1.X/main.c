@@ -59,26 +59,23 @@ int main() {
     // do your TRIS and LAT commands here
     TRISAbits.TRISA4 = 0;
     TRISBbits.TRISB4 = 1;
-    LATAbits.LATA4 = 1;
     __builtin_enable_interrupts();
-     
-
+    
     while(1) {
 	    // use _CP0_SET_COUNT(0) and _CP0_GET_COUNT() to test the PIC timing
 		  // remember the core timer runs at half the sysclk
         _CP0_SET_COUNT(0);
         elapsedticks = _CP0_GET_COUNT();
-        while (!PORTBbits.RB4){
-        LATAbits.LATA4 = 0;
+        while (PORTBbits.RB4 == 0){
+            LATAbits.LATA4 = 0; 
         }
-       
         LATAbits.LATA4 = 1;
-        while(_CP0_GET_COUNT() <= 2399) {
-            LATAbits.LATA4 = 1;}
+        while(_CP0_GET_COUNT() <= 11999) {
+            LATAbits.LATA4 = 1;
+        }
         _CP0_SET_COUNT(0);
-        while(_CP0_GET_COUNT() <= 2399) {
+        while(_CP0_GET_COUNT() <= 11999) {
             LATAbits.LATA4 = 0;
         }
-        //printf("elapsedms = %d\n", elapsedms);  
     }
 }
