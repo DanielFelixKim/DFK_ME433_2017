@@ -1,3 +1,6 @@
+#ifndef PIC32_H    /* Guard against multiple inclusion */
+#define PIC32_H
+
 #include<xc.h>           // processor SFR definitions
 #include<sys/attribs.h>  // __ISR macro
 #include <stdio.h>
@@ -31,51 +34,10 @@
 #pragma config UPLLEN = 0 // USB clock on
 
 // DEVCFG3
-#pragma config USERID = 0000000000000001 // some 16bit userid, doesn't matter what
+#pragma config USERID = 0x1 // some 16bit userid, doesn't matter what
 #pragma config PMDL1WAY = 0 // allow multiple reconfigurations
 #pragma config IOL1WAY = 0// allow multiple reconfigurations
 #pragma config FUSBIDIO = 1 // USB pins controlled by USB module
 #pragma config FVBUSONIO = 1 // USB BUSON controlled by USB module
 
-
-int main() {
-    int elapsedticks = 0;
-    int elapsedms = 0;
-    int button = 0;
-    __builtin_disable_interrupts();
-
-    // set the CP0 CONFIG register to indicate that kseg0 is cacheable (0x3)
-    __builtin_mtc0(_CP0_CONFIG, _CP0_CONFIG_SELECT, 0xa4210583);
-
-    // 0 data RAM access wait states
-    BMXCONbits.BMXWSDRM = 0x0;
-
-    // enable multi vector interrupts
-    INTCONbits.MVEC = 0x1;
-
-    // disable JTAG to get pins back
-    DDPCONbits.JTAGEN = 0;
-
-    // do your TRIS and LAT commands here
-    TRISAbits.TRISA4 = 0;
-    TRISBbits.TRISB4 = 1;
-    __builtin_enable_interrupts();
-    
-    while(1) {
-	    // use _CP0_SET_COUNT(0) and _CP0_GET_COUNT() to test the PIC timing
-		  // remember the core timer runs at half the sysclk
-        _CP0_SET_COUNT(0);
-        elapsedticks = _CP0_GET_COUNT();
-        while (PORTBbits.RB4 == 0){
-            LATAbits.LATA4 = 0; 
-        }
-        LATAbits.LATA4 = 1;
-        while(_CP0_GET_COUNT() <= 11999999) {
-            LATAbits.LATA4 = 1;
-        }
-        _CP0_SET_COUNT(0);
-        while(_CP0_GET_COUNT() <= 11999999) {
-            LATAbits.LATA4 = 0;
-        }
-    }
-}
+#endif
