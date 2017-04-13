@@ -1,6 +1,24 @@
 #include<math.h>
 #include"PIC32.h"
 
+//Function prototypes
+void i2c_master_setup(void);              // set up I2C 1 as a master, at 100 kHz
+void i2c_master_start(void);              // send a START signal
+void i2c_master_restart(void);            // send a RESTART signal
+void i2c_master_send(unsigned char byte); // send a byte (either an address or data)
+unsigned char i2c_master_recv(void);      // receive a byte of data
+void i2c_master_ack(int val);             // send an ACK (0) or NACK (1)
+void i2c_master_stop(void);               // send a stop
+
+int writeaddr = 0b01000000;
+int readaddr = 0b01000001;
+
+
+void main
+
+
+
+
 //I2C Functions
 void i2c_master_setup(void) {
   I2C2BRG = some number for 100kHz;            // I2CBRG = [1/(2*Fsck) - PGD]*Pblck - 2 
@@ -43,4 +61,20 @@ void i2c_master_ack(int val) {        // sends ACK = 0 (slave should send anothe
 void i2c_master_stop(void) {          // send a STOP:
   I2C2CONbits.PEN = 1;                // comm is complete and master relinquishes bus
   while(I2C2CONbits.PEN) { ; }        // wait for STOP to complete
+}
+
+void initExpander(){
+    i2c_master_start();
+    i2c_master_send(writeaddr);
+    i2c_master_send(0x0A);
+    i2c_master_send(0x0000);
+    i2c_master_stop();
+}
+
+void setExpander(char pin, char level){
+    
+}
+
+char getExpander(){
+    
 }
