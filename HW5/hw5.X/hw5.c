@@ -9,21 +9,63 @@ void i2c_master_send(unsigned char byte); // send a byte (either an address or d
 unsigned char i2c_master_recv(void);      // receive a byte of data
 void i2c_master_ack(int val);             // send an ACK (0) or NACK (1)
 void i2c_master_stop(void);               // send a stop
+void initExpander();
+void setExpander(char pin, char level);
+char getExpander();
 
 int writeaddr = 0b01000000;
 int readaddr = 0b01000001;
 
 
-void main
+void main(void){
+     __builtin_disable_interrupts();
+     
+    // set the CP0 CONFIG register to indicate that kseg0 is cacheable (0x3)
+    __builtin_mtc0(_CP0_CONFIG, _CP0_CONFIG_SELECT, 0xa4210583);
+
+    // 0 data RAM access wait states
+    BMXCONbits.BMXWSDRM = 0x0;
+
+    // enable multi vector interrupts
+    INTCONbits.MVEC = 0x1;
+
+    // disable JTAG to get pins back
+    DDPCONbits.JTAGEN = 0;
+
+    // do your TRIS and LAT commands here
+
+    __builtin_enable_interrupts();
+    
+    i2c_master_setup();
+    initExpander();
+    
+    while(1){
+
+        if ((getExpander() & 0b10000000) == 0b10000000){
+            setExpander(0b00000001,1);
+        }
+        else {
+            setExpander(0b00000001,0);
+        }
+    }
+    
+}
 
 
 
 
 //I2C Functions
 void i2c_master_setup(void) {
-  I2C2BRG = some number for 100kHz;            // I2CBRG = [1/(2*Fsck) - PGD]*Pblck - 2 
+  ANSELBbits.ANSB2 = 0;
+  ANSELBbits.ANSB3 = 0;
+  I2C2BRG = 233;            // I2CBRG = [1/(2*Fsck) - PGD]*Pblck - 2 
                                     // look up PGD for your PIC32
   I2C2CONbits.ON = 1;               // turn on the I2C1 module
+  i2c_master_start();
+  i2c_master_send(writeaddr);
+  i2c_master_send(0x00);
+  i2c_master_send(0b11110000);
+  i2c_master_stop();
 }
 
 // Start a transmission on the I2C bus
@@ -72,9 +114,25 @@ void initExpander(){
 }
 
 void setExpander(char pin, char level){
-    
+    char level_send = 0xFFFF;
+    if (level == 0){
+        level_send = 0x0000;
+    }
+    i2c_master_start();
+    i2c_master_send(writeaddr);
+    i2c_master_send(0x0A);
+    i2c_master_send(level_send & pin);
+    i2c_master_stop();
 }
 
 char getExpander(){
-    
+    i2c_master_start();
+    i2c_master_send(writeaddr);
+    i2c_master_send(0x09);
+    i2c_master_restart();
+    i2c_master_send(readaddr);
+    char read = i2c_master_recv();
+    i2c_master_ack(1);
+    i2c_master_stop();
+    return read;
 }
