@@ -1,6 +1,7 @@
 #include<xc.h>           // processor SFR definitions
 #include<sys/attribs.h>  // __ISR macro
 #include <stdio.h>
+#include "ILI9163C_H__.h" 
 
 // DEVCFG0
 #pragma config DEBUG = 1 // no debugging
@@ -58,10 +59,27 @@ int main() {
     // do your TRIS and LAT commands here
 
     __builtin_enable_interrupts();
+    
+    SPI1_init();
+    LCD_init();
+    LCD_clearScreen(WHITE);
+    int ii=0;
 
     while(1) {
 	    // use _CP0_SET_COUNT(0) and _CP0_GET_COUNT() to test the PIC timing
 		  // remember the core timer runs at half the sysclk
+        _CP0_SET_COUNT(0);
+        char send_msg[100];
+        sprintf(send_msg, "Hello");
+        LCD_Draw_String(28,32, send_msg);
+        while(_CP0_GET_COUNT()< 480000){
+            ;
+        }
+        ii++;
+        LCD_Draw_Line(64,64,ii);
+         if (ii >100){
+             ii = 0;
+        }
     }
 }
 
@@ -83,7 +101,7 @@ int main() {
 // B8 is turned into SDI1 but is not used or connected to anything
 
 #include <xc.h>
-#include "ILI9163C.h"
+
 
 void SPI1_init() {
 	SDI1Rbits.SDI1R = 0b0100; // B8 is SDI1
@@ -257,4 +275,56 @@ void LCD_clearScreen(unsigned short color) {
 		for (i = 0;i < _GRAMSIZE; i++){
 			LCD_data16(color);
 		}
+}
+
+void LCD_Draw_Char(unsigned short x, unsigned short y, char c){
+    int i;
+    int j;
+    char row = c - 0x20;
+ 
+    if ((x<124) & (y<121)){
+        for(i=0; i<5; i++){
+            char byte = ASCII[row][i];
+            for (j=7; j>=0; j--){
+                if (((byte>>j)&1) == 1){
+                    LCD_drawPixel(x+i, y+j, 0x0000);
+                }
+                if (((byte>>j)&1) == 0){
+                    LCD_drawPixel(x+i, y+j, 0xFFFF);
+                }
+            }
+        }
+    }
+    else{
+        LCD_clearScreen(BLACK);
+    }
+}
+
+void LCD_Draw_Line(unsigned short x, unsigned short y, int line_len){
+    if (line_len<50){
+          LCD_drawPixel(x+line_len, y, 0x0000);   
+        }
+    else if (line_len>=50){
+           LCD_drawPixel(x+100-line_len, y, 0xFFFF);   
+    }
+  
+    
+
+    
+}
+
+void LCD_Draw_String(unsigned short x, unsigned short y, char *string){
+    int i = 0;
+    while(string[i]){
+         LCD_Draw_Char(x, y, string[i]);
+         x=x+7;
+         if (x>123){
+             x = 0;
+             y = y + 10;
+         }
+         if (y>120){
+             y = 0;
+         }
+         i++;
+    }
 }
