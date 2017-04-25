@@ -4,10 +4,11 @@
 #include "ILI9163C_H__.h" 
 #include "PIC32.h"
 #include "IMU.h"
+#include <math.h>
 
 void SPI1_init() ;
 void LCD_Draw_Char(unsigned short x, unsigned short y, char c);
-void LCD_Draw_Line(unsigned short x, unsigned short y, int line_len);
+
 void LCD_Draw_String(unsigned short x, unsigned short y, char *string);
 void i2c_master_setup(void);              // set up I2C 1 as a master, at 100 kHz
 void i2c_master_start(void);              // send a START signal
@@ -16,8 +17,8 @@ void i2c_master_send(unsigned char byte); // send a byte (either an address or d
 unsigned char i2c_master_recv(void);      // receive a byte of data
 void i2c_master_ack(int val);             // send an ACK (0) or NACK (1)
 void i2c_master_stop(void);               // send a stop
-void I2C_send_register(unsigned char address, unsigned char * data, int length);
-void I2C_read_multiple(unsigned char address, unsigned char register_s, unsigned char * data, int length);
+void I2C_send_register(char address, char * data, char length);
+void I2C_read_multiple(char address, char register_s, char * data, char length);
 
 
 int writeaddr = 0b11010110;
@@ -46,39 +47,95 @@ int main() {
     SPI1_init();
     i2c_master_setup();
     
-    LCD_init();
-    LCD_clearScreen(WHITE);
+    char send_I2C_vals[2];
+    
+    send_I2C_vals[0] = CTRL1_XL; // Accel reg
+    send_I2C_vals[1] = 0x80; // High performance 1.66kHz, 2g, 100hz
+    I2C_send_register(IMU_REG, send_I2C_vals, 2);
+    
+    send_I2C_vals[0] = CTRL2_G; // Gyroscope reg
+    send_I2C_vals[1] = 0x80; // High performance
+    I2C_send_register(IMU_REG, send_I2C_vals, 2);
+
+    send_I2C_vals[0] = CTRL3_C; // Increment
+    send_I2C_vals[1] = 0x04; // Continue incrementing registers 
+    I2C_send_register(IMU_REG, send_I2C_vals, 2);
+  
     
     char data_vals[14];
     short temperature;
     short accel_X;
+    short accel_X_temp = 0;
+    short accel_X_delta = 0;
     short accel_Y;
+    short accel_Y_temp = 0;
+    short accel_Y_delta = 0;
     short accel_Z;
     short gyro_X;
     short gyro_Y;
     short gyro_Z;
-
-    char check_who_am_i[1];
-    I2C_read_multiple(IMU_REG,  check_who_am_i, 1);
+    LCD_init();
+    LCD_clearScreen(WHITE);
     
+   
+    char check_who_am_i[1];
+    I2C_read_multiple(IMU_REG, WHO_AM_I, check_who_am_i, 1);
+ 
     int ii=0;
-
+    int start = 0;
     while(1) {
 	    // use _CP0_SET_COUNT(0) and _CP0_GET_COUNT() to test the PIC timing
 		  // remember the core timer runs at half the sysclk
         _CP0_SET_COUNT(0);
         char send_msg[100];
-        char read ;
         sprintf(send_msg, "IMU Test");
         LCD_Draw_String(1,2, send_msg);
-        while(_CP0_GET_COUNT()< 480000){
+        
+        I2C_read_multiple(IMU_REG, OUT_TEMP_L, data_vals, 14);
+        temperature = data_vals[1] << 8 | data_vals[0];
+        gyro_X = data_vals[3] << 8 | data_vals[2];
+        gyro_Y = data_vals[5] << 8 | data_vals[4];
+        gyro_Z = data_vals[7] << 8 | data_vals[6];
+        accel_X = data_vals[9] << 8 | data_vals[8];
+        accel_Y = data_vals[11] << 8 | data_vals[10];
+        accel_Z = data_vals[13] << 8 | data_vals[12];
+        
+        
+        while(_CP0_GET_COUNT()< 4800000){
             ;
         }
-        ii++;
-        LCD_Draw_Line(64,64,ii);
-         if (ii >100){
-             ii = 0;
+        if (start == 0){
+            accel_X = accel_X - accel_X; 
+            accel_Y = accel_Y - accel_Y; 
         }
+        start = 1;
+        accel_X_delta = accel_X - accel_X_temp; 
+        accel_X_temp = accel_X;
+        accel_Y_delta = accel_Y - accel_X_temp; 
+        accel_Y_temp = accel_Y;
+        
+        sprintf(send_msg, "%x", check_who_am_i[0]);
+        LCD_Draw_String(1, 16, send_msg);
+        
+        sprintf(send_msg, "%d", accel_X);
+        LCD_Draw_String(64, 64, send_msg);
+
+ 
+        sprintf(send_msg, "%d", accel_Y);
+        LCD_Draw_String(64, 74, send_msg);
+        
+        sprintf(send_msg, "%d", accel_X_delta);
+        LCD_Draw_String(64, 84, send_msg);
+        
+        sprintf(send_msg, "%d", accel_Y_delta);
+        LCD_Draw_String(64, 94, send_msg);
+        
+//        LCD_Draw_Line_X(64,64,accel_X);
+//        LCD_Draw_Line_Y(64,64,accel_Y);
+        
+        
+        
+        
         
     }
 }
@@ -300,15 +357,24 @@ void LCD_Draw_Char(unsigned short x, unsigned short y, char c){
     }
 }
 
-void LCD_Draw_Line(unsigned short x, unsigned short y, int line_len){
-    if (line_len<50){
-          LCD_drawPixel(x+line_len, y, 0x0000);   
-        }
-    else if (line_len>=50){
-           LCD_drawPixel(x+100-line_len, y, 0xFFFF);   
-    }
-}
+//void LCD_Draw_Line_X(unsigned short x, unsigned short y, int line_len_x){
+//    if (0< line_len_x < 50){
+//          LCD_drawPixel(x+line_len_x, y, 0x0000);   
+//        }
+//    else if (line_len_x>=50){
+//           LCD_drawPixel(x+100-line_len_x, y, 0xFFFF);   
+//    }
+//}
 
+//void LCD_Draw_Line_X(unsigned short x, unsigned short y, short line_len_y){
+//    if (0<line_len<50){
+//          LCD_drawPixel(x, y+line_len, 0x0000);   
+//        }
+//    else if (line_len>=50){
+//           LCD_drawPixel(x, y+100-line_len, 0xFFFF);   
+//    }
+//}
+//
 void LCD_Draw_String(unsigned short x, unsigned short y, char *string){
     int i = 0;
     while(string[i]){
@@ -333,19 +399,6 @@ void i2c_master_setup(void) {
   I2C2BRG = 233;            // I2CBRG = [1/(2*Fsck) - PGD]*Pblck - 2 
                                     // look up PGD for your PIC32
   I2C2CONbits.ON = 1;               // turn on the I2C1 module
-  char send_I2C_vals[2];
-    
-  send_I2C_vals[0] = CTRL1_XL; // Accel reg
-  send_I2C_vals[1] = 0x80; // High performance
-  I2C_send_register(IMU_REG, send_I2C_vals, 2);
-    
-  send_I2C_vals[0] = CTRL2_G; // Gyroscope reg
-  send_I2C_vals[1] = 0x80; // High performance
-  I2C_send_register(IMU_REG, send_I2C_vals, 2);
-    
-  send_I2C_vals[0] = CTRL3_C; // Increment
-  send_I2C_vals[1] = 0x04; // Continue incrementing registers 
-  I2C_send_register(IMU_REG, send_I2C_vals, 2);
 }
 
 // Start a transmission on the I2C bus
@@ -385,7 +438,7 @@ void i2c_master_stop(void) {          // send a STOP:
   while(I2C2CONbits.PEN) { ; }        // wait for STOP to complete
 }
 
-void I2C_send_register(unsigned char address, unsigned char * data, int length){
+void I2C_send_register(char address, char * data, char length){
    int i = 0;
    i2c_master_start();
    i2c_master_send(address << 1); 
@@ -395,7 +448,7 @@ void I2C_send_register(unsigned char address, unsigned char * data, int length){
    i2c_master_stop();
 }
 
-void I2C_read_multiple(unsigned char address, unsigned char register_s, unsigned char * data, int length){
+void I2C_read_multiple( char address, char register_s, char * data, char length){
     int i = 0;
     i2c_master_start();
     i2c_master_send(address<<1);
@@ -408,6 +461,6 @@ void I2C_read_multiple(unsigned char address, unsigned char register_s, unsigned
             i2c_master_ack(0);
         }
     }
-    i2c_master_ack(0);
+    i2c_master_ack(1);
     i2c_master_stop();
 }
