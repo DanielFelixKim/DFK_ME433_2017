@@ -8,7 +8,8 @@
 
 void SPI1_init() ;
 void LCD_Draw_Char(unsigned short x, unsigned short y, char c);
-
+void LCD_Draw_Line_X(unsigned short x, unsigned short y, int line_len_x);
+void LCD_Draw_Line_Y(unsigned short x, unsigned short y, short line_len_y);
 void LCD_Draw_String(unsigned short x, unsigned short y, char *string);
 void i2c_master_setup(void);              // set up I2C 1 as a master, at 100 kHz
 void i2c_master_start(void);              // send a START signal
@@ -82,6 +83,7 @@ int main() {
     I2C_read_multiple(IMU_REG, WHO_AM_I, check_who_am_i, 1);
  
     int ii=0;
+    int jj=0;
     int start = 0;
     while(1) {
 	    // use _CP0_SET_COUNT(0) and _CP0_GET_COUNT() to test the PIC timing
@@ -109,26 +111,50 @@ int main() {
             accel_Y = accel_Y - accel_Y; 
         }
         start = 1;
-        accel_X_delta = accel_X - accel_X_temp; 
+        if(accel_X > accel_X_temp){
+            ii++;
+        }
+        if(accel_X < accel_X_temp){
+            ii--;
+        }
+        if(accel_Y > accel_Y_temp){
+            jj++;
+        }
+        if(accel_Y < accel_Y_temp){
+            jj--;
+        }
+        
+        LCD_Draw_Line_X(64,64,ii);
+       
+        
+        LCD_Draw_Line_Y(64,64,jj);
+        
+        
+        
         accel_X_temp = accel_X;
-        accel_Y_delta = accel_Y - accel_X_temp; 
         accel_Y_temp = accel_Y;
         
-        sprintf(send_msg, "%x", check_who_am_i[0]);
+        sprintf(send_msg, "%d", check_who_am_i[0]);
         LCD_Draw_String(1, 16, send_msg);
         
-        sprintf(send_msg, "%d", accel_X);
-        LCD_Draw_String(64, 64, send_msg);
-
- 
-        sprintf(send_msg, "%d", accel_Y);
-        LCD_Draw_String(64, 74, send_msg);
+        sprintf(send_msg, "%d", ii);
+        LCD_Draw_String(64, 1, send_msg);
         
-        sprintf(send_msg, "%d", accel_X_delta);
-        LCD_Draw_String(64, 84, send_msg);
+        sprintf(send_msg, "%d", jj);
+        LCD_Draw_String(90, 16, send_msg);
         
-        sprintf(send_msg, "%d", accel_Y_delta);
-        LCD_Draw_String(64, 94, send_msg);
+//        sprintf(send_msg, "%d", accel_X);
+//        LCD_Draw_String(64, 2, send_msg);
+//
+// 
+//        sprintf(send_msg, "%d", accel_Y);
+//        LCD_Draw_String(64, 12, send_msg);
+//        
+//        sprintf(send_msg, "%d", accel_X_delta);
+//        LCD_Draw_String(64, 22, send_msg);
+//        
+//        sprintf(send_msg, "%d", accel_Y_delta);
+//        LCD_Draw_String(64, 32, send_msg);
         
 //        LCD_Draw_Line_X(64,64,accel_X);
 //        LCD_Draw_Line_Y(64,64,accel_Y);
@@ -357,24 +383,32 @@ void LCD_Draw_Char(unsigned short x, unsigned short y, char c){
     }
 }
 
-//void LCD_Draw_Line_X(unsigned short x, unsigned short y, int line_len_x){
-//    if (0< line_len_x < 50){
-//          LCD_drawPixel(x+line_len_x, y, 0x0000);   
-//        }
-//    else if (line_len_x>=50){
-//           LCD_drawPixel(x+100-line_len_x, y, 0xFFFF);   
-//    }
-//}
+void LCD_Draw_Line_X(unsigned short x, unsigned short y, int line_len_x){
+    if (-50<line_len_x < 50){
+        if(line_len_x > 0){
+            LCD_drawPixel(x+line_len_x, y, 0x0000);
+             LCD_drawPixel(64-50, y, 0xFFFF);
+        }
+        if(line_len_x < 0){
+            LCD_drawPixel(x+line_len_x, y, 0x0000);
+            LCD_drawPixel(64+50, y, 0xFFFF);
+        }  
+    }   
+}
 
-//void LCD_Draw_Line_X(unsigned short x, unsigned short y, short line_len_y){
-//    if (0<line_len<50){
-//          LCD_drawPixel(x, y+line_len, 0x0000);   
-//        }
-//    else if (line_len>=50){
-//           LCD_drawPixel(x, y+100-line_len, 0xFFFF);   
-//    }
-//}
-//
+void LCD_Draw_Line_Y(unsigned short x, unsigned short y, short line_len_y){
+    if (-50<line_len_y < 50){
+        if(line_len_y > 0){
+            LCD_drawPixel(x, y+line_len_y, 0x0000);
+            LCD_drawPixel(x, 64-50, 0xFFFF);
+        }
+        if(line_len_y < 0){
+            LCD_drawPixel(x, y+line_len_y, 0x0000);
+            LCD_drawPixel(x, 64+50, 0xFFFF);
+        }  
+    }   
+}
+
 void LCD_Draw_String(unsigned short x, unsigned short y, char *string){
     int i = 0;
     while(string[i]){
