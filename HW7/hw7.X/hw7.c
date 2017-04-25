@@ -3,8 +3,25 @@
 #include <stdio.h>
 #include "ILI9163C_H__.h" 
 #include "PIC32.h"
+#include "IMU.h"
+
+void SPI1_init() ;
+void LCD_Draw_Char(unsigned short x, unsigned short y, char c);
+void LCD_Draw_Line(unsigned short x, unsigned short y, int line_len);
+void LCD_Draw_String(unsigned short x, unsigned short y, char *string);
+void i2c_master_setup(void);              // set up I2C 1 as a master, at 100 kHz
+void i2c_master_start(void);              // send a START signal
+void i2c_master_restart(void);            // send a RESTART signal
+void i2c_master_send(unsigned char byte); // send a byte (either an address or data)
+unsigned char i2c_master_recv(void);      // receive a byte of data
+void i2c_master_ack(int val);             // send an ACK (0) or NACK (1)
+void i2c_master_stop(void);               // send a stop
+void I2C_send_register(unsigned char address, unsigned char * data, int length);
+void I2C_read_multiple(unsigned char address, unsigned char register_s, unsigned char * data, int length);
 
 
+int writeaddr = 0b11010110;
+int readaddr = 0b11010111;
 
 int main() {
 
@@ -27,9 +44,23 @@ int main() {
     __builtin_enable_interrupts();
     
     SPI1_init();
+    i2c_master_setup();
+    
     LCD_init();
     LCD_clearScreen(WHITE);
-    i2c_master_setup();
+    
+    char data_vals[14];
+    short temperature;
+    short accel_X;
+    short accel_Y;
+    short accel_Z;
+    short gyro_X;
+    short gyro_Y;
+    short gyro_Z;
+
+    char check_who_am_i[1];
+    I2C_read_multiple(IMU_REG,  check_who_am_i, 1);
+    
     int ii=0;
 
     while(1) {
@@ -37,6 +68,7 @@ int main() {
 		  // remember the core timer runs at half the sysclk
         _CP0_SET_COUNT(0);
         char send_msg[100];
+        char read ;
         sprintf(send_msg, "IMU Test");
         LCD_Draw_String(1,2, send_msg);
         while(_CP0_GET_COUNT()< 480000){
@@ -47,6 +79,7 @@ int main() {
          if (ii >100){
              ii = 0;
         }
+        
     }
 }
 
@@ -274,10 +307,6 @@ void LCD_Draw_Line(unsigned short x, unsigned short y, int line_len){
     else if (line_len>=50){
            LCD_drawPixel(x+100-line_len, y, 0xFFFF);   
     }
-  
-    
-
-    
 }
 
 void LCD_Draw_String(unsigned short x, unsigned short y, char *string){
@@ -304,11 +333,19 @@ void i2c_master_setup(void) {
   I2C2BRG = 233;            // I2CBRG = [1/(2*Fsck) - PGD]*Pblck - 2 
                                     // look up PGD for your PIC32
   I2C2CONbits.ON = 1;               // turn on the I2C1 module
-  i2c_master_start();
-  i2c_master_send(writeaddr);
-  i2c_master_send(0x00);
-  i2c_master_send(0b11110000);
-  i2c_master_stop();
+  char send_I2C_vals[2];
+    
+  send_I2C_vals[0] = CTRL1_XL; // Accel reg
+  send_I2C_vals[1] = 0x80; // High performance
+  I2C_send_register(IMU_REG, send_I2C_vals, 2);
+    
+  send_I2C_vals[0] = CTRL2_G; // Gyroscope reg
+  send_I2C_vals[1] = 0x80; // High performance
+  I2C_send_register(IMU_REG, send_I2C_vals, 2);
+    
+  send_I2C_vals[0] = CTRL3_C; // Increment
+  send_I2C_vals[1] = 0x04; // Continue incrementing registers 
+  I2C_send_register(IMU_REG, send_I2C_vals, 2);
 }
 
 // Start a transmission on the I2C bus
@@ -346,4 +383,31 @@ void i2c_master_ack(int val) {        // sends ACK = 0 (slave should send anothe
 void i2c_master_stop(void) {          // send a STOP:
   I2C2CONbits.PEN = 1;                // comm is complete and master relinquishes bus
   while(I2C2CONbits.PEN) { ; }        // wait for STOP to complete
+}
+
+void I2C_send_register(unsigned char address, unsigned char * data, int length){
+   int i = 0;
+   i2c_master_start();
+   i2c_master_send(address << 1); 
+   for (i = 0; i<length;i++){
+       i2c_master_send(data[i]);
+   }
+   i2c_master_stop();
+}
+
+void I2C_read_multiple(unsigned char address, unsigned char register_s, unsigned char * data, int length){
+    int i = 0;
+    i2c_master_start();
+    i2c_master_send(address<<1);
+    i2c_master_send(register_s);
+    i2c_master_restart();
+    i2c_master_send((address << 1)|1);
+    for (i = 0; i<length;i++){
+        data[i] = i2c_master_recv();
+        if (i < length - 1){
+            i2c_master_ack(0);
+        }
+    }
+    i2c_master_ack(0);
+    i2c_master_stop();
 }
