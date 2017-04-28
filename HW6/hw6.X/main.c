@@ -64,7 +64,7 @@ int main() {
     LCD_init();
     LCD_clearScreen(WHITE);
     int ii=0;
-
+    float jj =0.0;
     while(1) {
 	    // use _CP0_SET_COUNT(0) and _CP0_GET_COUNT() to test the PIC timing
 		  // remember the core timer runs at half the sysclk
@@ -76,10 +76,15 @@ int main() {
             ;
         }
         ii++;
+        
+        sprintf(send_msg, "%d   ", ii);
+        LCD_Draw_String(78, 32, send_msg);
+        
         LCD_Draw_Line(64,64,ii);
          if (ii >100){
              ii = 0;
         }
+        
     }
 }
 

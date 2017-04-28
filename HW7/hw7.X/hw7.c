@@ -18,8 +18,8 @@ void i2c_master_send(unsigned char byte); // send a byte (either an address or d
 unsigned char i2c_master_recv(void);      // receive a byte of data
 void i2c_master_ack(int val);             // send an ACK (0) or NACK (1)
 void i2c_master_stop(void);               // send a stop
-void I2C_send_register(char address, char * data, char length);
-void I2C_read_multiple(char address, char register_s, char * data, char length);
+void I2C_send_register(unsigned char address, unsigned char * data, unsigned char length);
+void I2C_read_multiple(unsigned char address, unsigned char register_s, unsigned char * data, unsigned char length);
 
 
 int writeaddr = 0b11010110;
@@ -63,7 +63,7 @@ int main() {
     I2C_send_register(IMU_REG, send_I2C_vals, 2);
   
     
-    char data_vals[14];
+    unsigned char data_vals[14];
     short temperature;
     short accel_X;
     short accel_X_temp = 0;
@@ -79,7 +79,7 @@ int main() {
     LCD_clearScreen(WHITE);
     
    
-    char check_who_am_i[1];
+    unsigned char check_who_am_i[1];
     I2C_read_multiple(IMU_REG, WHO_AM_I, check_who_am_i, 1);
  
     int ii=0;
@@ -111,23 +111,23 @@ int main() {
             accel_Y = accel_Y - accel_Y; 
         }
         start = 1;
-        if(accel_X > accel_X_temp){
-            ii++;
+        if(accel_X + 500 > accel_X_temp){
+            ii= ii + 5;
         }
-        if(accel_X < accel_X_temp){
-            ii--;
+        if(accel_X - 500 < accel_X_temp){
+            ii= ii - 5;
         }
-        if(accel_Y > accel_Y_temp){
-            jj++;
+        if(accel_Y + 500 > accel_Y_temp){
+            jj = jj + 5;
         }
-        if(accel_Y < accel_Y_temp){
-            jj--;
+        if(accel_Y - 500 < accel_Y_temp){
+            jj = jj - 5;
         }
         
-        LCD_Draw_Line_X(64,64,ii);
-       
-        
-        LCD_Draw_Line_Y(64,64,jj);
+//        LCD_Draw_Line_X(64,64,ii);
+//       
+//        
+//        LCD_Draw_Line_Y(64,64,jj);
         
         
         
@@ -137,27 +137,27 @@ int main() {
         sprintf(send_msg, "%d", check_who_am_i[0]);
         LCD_Draw_String(1, 16, send_msg);
         
-        sprintf(send_msg, "%d", ii);
-        LCD_Draw_String(64, 1, send_msg);
-        
-        sprintf(send_msg, "%d", jj);
-        LCD_Draw_String(90, 16, send_msg);
-        
-//        sprintf(send_msg, "%d", accel_X);
-//        LCD_Draw_String(64, 2, send_msg);
-//
-// 
-//        sprintf(send_msg, "%d", accel_Y);
-//        LCD_Draw_String(64, 12, send_msg);
+//        sprintf(send_msg, "%d   ", ii);
+//        LCD_Draw_String(64, 1, send_msg);
 //        
-//        sprintf(send_msg, "%d", accel_X_delta);
+//        sprintf(send_msg, "%d   ", jj);
+//        LCD_Draw_String(90, 16, send_msg);
+        
+        sprintf(send_msg, "X:%d   ", accel_X);
+        LCD_Draw_String(84, 80, send_msg);
+
+ 
+        sprintf(send_msg, "Y%d   ", accel_Y);
+        LCD_Draw_String(84, 100, send_msg);
+        
+//        sprintf(send_msg, "%d   ", accel_X_delta);
 //        LCD_Draw_String(64, 22, send_msg);
 //        
-//        sprintf(send_msg, "%d", accel_Y_delta);
+//        sprintf(send_msg, "%d   ", accel_Y_delta);
 //        LCD_Draw_String(64, 32, send_msg);
-        
-//        LCD_Draw_Line_X(64,64,accel_X);
-//        LCD_Draw_Line_Y(64,64,accel_Y);
+//        
+        LCD_Draw_Line_X(64,64,ii);
+        LCD_Draw_Line_Y(64,64,jj);
         
         
         
@@ -384,29 +384,70 @@ void LCD_Draw_Char(unsigned short x, unsigned short y, char c){
 }
 
 void LCD_Draw_Line_X(unsigned short x, unsigned short y, int line_len_x){
-    if (-50<line_len_x < 50){
-        if(line_len_x > 0){
-            LCD_drawPixel(x+line_len_x, y, 0x0000);
-             LCD_drawPixel(64-50, y, 0xFFFF);
+    
+    if(line_len_x > 0){
+        int i = 0;
+        if(line_len_x >50){
+            line_len_x = 50;
         }
-        if(line_len_x < 0){
-            LCD_drawPixel(x+line_len_x, y, 0x0000);
-            LCD_drawPixel(64+50, y, 0xFFFF);
-        }  
-    }   
+        for (i = 0; i<line_len_x;i++){
+             LCD_drawPixel(x-i, y, 0x0000);
+        }
+        if(line_len_x < 50){
+            for (i = line_len_x; i<50;i++){
+                    LCD_drawPixel(x-i, y, 0xFFFF);
+            }
+        }
+    }
+        
+    if(line_len_x < 0){
+        int i = 0;
+        if(line_len_x < -50){
+            line_len_x = -50;
+        }
+        for (i = 0; i>line_len_x;i--){
+             LCD_drawPixel(x-i, y, 0x0000);
+        }
+        if(line_len_x > -50){
+            for (i = line_len_x; i > -50;i--){
+                    LCD_drawPixel(x-i, y, 0xFFFF);
+            }
+        }
+    }
 }
+    
+
 
 void LCD_Draw_Line_Y(unsigned short x, unsigned short y, short line_len_y){
-    if (-50<line_len_y < 50){
-        if(line_len_y > 0){
-            LCD_drawPixel(x, y+line_len_y, 0x0000);
-            LCD_drawPixel(x, 64-50, 0xFFFF);
+    if(line_len_y > 0){
+        int i = 0;
+        if(line_len_y >50){
+            line_len_y = 50;
         }
-        if(line_len_y < 0){
-            LCD_drawPixel(x, y+line_len_y, 0x0000);
-            LCD_drawPixel(x, 64+50, 0xFFFF);
-        }  
-    }   
+        for (i = 0; i<line_len_y;i++){
+             LCD_drawPixel(x, y-i, 0x0000);
+        }
+        if(line_len_y < 50){
+            for (i = line_len_y; i<50;i++){
+                    LCD_drawPixel(x, y-i, 0xFFFF);
+            }
+        }
+    }
+        
+    if(line_len_y < 0){
+        int i = 0;
+        if(line_len_y < -50){
+            line_len_y = -50;
+        }
+        for (i = 0; i>line_len_y;i--){
+             LCD_drawPixel(x, y-i, 0x0000);
+        }
+        if(line_len_y > -50){
+            for (i = line_len_y; i > -50;i--){
+                    LCD_drawPixel(x, y-i, 0xFFFF);
+            }
+        }
+    }
 }
 
 void LCD_Draw_String(unsigned short x, unsigned short y, char *string){
@@ -472,7 +513,7 @@ void i2c_master_stop(void) {          // send a STOP:
   while(I2C2CONbits.PEN) { ; }        // wait for STOP to complete
 }
 
-void I2C_send_register(char address, char * data, char length){
+void I2C_send_register(unsigned char address, unsigned char * data, unsigned char length){
    int i = 0;
    i2c_master_start();
    i2c_master_send(address << 1); 
@@ -482,7 +523,7 @@ void I2C_send_register(char address, char * data, char length){
    i2c_master_stop();
 }
 
-void I2C_read_multiple( char address, char register_s, char * data, char length){
+void I2C_read_multiple( unsigned char address, unsigned char register_s, unsigned char * data, unsigned char length){
     int i = 0;
     i2c_master_start();
     i2c_master_send(address<<1);
