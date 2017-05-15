@@ -51,7 +51,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "app.h"
 #include <stdio.h>
 #include <xc.h>
-
+#include "IMU9.h"
 // *****************************************************************************
 // *****************************************************************************
 // Section: Global Data Definitions
@@ -62,7 +62,18 @@ uint8_t APP_MAKE_BUFFER_DMA_READY dataOut[APP_READ_BUFFER_SIZE];
 uint8_t APP_MAKE_BUFFER_DMA_READY readBuffer[APP_READ_BUFFER_SIZE];
 int len, i = 0;
 int startTime = 0;
-
+    unsigned char data_vals[14];
+short temperature;
+short accel_X;
+short accel_X_temp = 0;
+short accel_X_delta = 0;
+short accel_Y;
+short accel_Y_temp = 0;
+short accel_Y_delta = 0;
+short accel_Z;
+short gyro_X;
+short gyro_Y;
+short gyro_Z;
 // *****************************************************************************
 /* Application Data
   Summary:
@@ -332,6 +343,10 @@ void APP_Initialize(void) {
     appData.readBuffer = &readBuffer[0];
 
     startTime = _CP0_GET_COUNT();
+    i2c_master_setup();
+    SPI1_init();
+    LCD_init();
+    imu_init();
 }
 
 /******************************************************************************
@@ -408,10 +423,37 @@ void APP_Tasks(void) {
             /* Check if a character was received or a switch was pressed.
              * The isReadComplete flag gets updated in the CDC event handler. */
 
-            if (appData.isReadComplete || _CP0_GET_COUNT() - startTime > (48000000 / 2 / 5)) {
+            if (appData.isReadComplete || _CP0_GET_COUNT() - startTime > (48000000 / 20 / 10)) {
                 appData.state = APP_STATE_SCHEDULE_WRITE;
             }
+            
+            if ((readBuffer[0] == 'r') && (i < 1000)){
+                i++;
+                appData.state = APP_STATE_SCHEDULE_WRITE;
+            }
+            else if (i >= 999){
+                i = 0;
+                readBuffer[0] = 'n';
+                break;
+     
+            }else {
+                break;
+            }
+            char send_msg[100];
+            sprintf(send_msg, "IMU Test");
+            LCD_Draw_String(1,2, send_msg);
 
+            I2C_read_multiple(IMU_REG, OUT_TEMP_L, data_vals, 14);
+            temperature = data_vals[1] << 8 | data_vals[0];
+            gyro_X = data_vals[3] << 8 | data_vals[2];
+            gyro_Y = data_vals[5] << 8 | data_vals[4];
+            gyro_Z = data_vals[7] << 8 | data_vals[6];
+            accel_X = data_vals[9] << 8 | data_vals[8];
+            accel_Y = data_vals[11] << 8 | data_vals[10];
+            accel_Z = data_vals[13] << 8 | data_vals[12];
+            len = sprintf(dataOut, "%d,%d,%d,%d,%d,%d,%d\r\n", i, accel_X, accel_Y, accel_Z, gyro_X, gyro_Y, gyro_Z);
+            
+            
             break;
 
 
@@ -426,9 +468,11 @@ void APP_Tasks(void) {
             appData.writeTransferHandle = USB_DEVICE_CDC_TRANSFER_HANDLE_INVALID;
             appData.isWriteComplete = false;
             appData.state = APP_STATE_WAIT_FOR_WRITE_COMPLETE;
-
-            len = sprintf(dataOut, "%d\r\n", i);
-            i++;
+            if (len == 0){
+                len = 1;
+                dataOut[0] = 0;
+            }
+            
             if (appData.isReadComplete) {
                 USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
                         &appData.writeTransferHandle,

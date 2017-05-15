@@ -1,7 +1,7 @@
 #include <xc.h>
-#include "LCD.h"
-#include "IMU.h"
 #include <stdio.h>
+#include "IMU9.h"
+#include "LCD9.h"
 
 void SPI1_init() {
 	SDI1Rbits.SDI1R = 0b0100; // B8 is SDI1
@@ -283,5 +283,33 @@ void LCD_Draw_String(unsigned short x, unsigned short y, char *string){
          i++;
     }
 }
+
+void imu_init()
+{
+    char send_I2C_vals[2];
+    
+    send_I2C_vals[0] = CTRL1_XL; // Accel reg
+    send_I2C_vals[1] = 0x80; // High performance 1.66kHz, 2g, 100hz
+    I2C_send_register(IMU_REG, send_I2C_vals, 2);
+    
+    send_I2C_vals[0] = CTRL2_G; // Gyroscope reg
+    send_I2C_vals[1] = 0x80; // High performance
+    I2C_send_register(IMU_REG, send_I2C_vals, 2);
+
+    send_I2C_vals[0] = CTRL3_C; // Increment
+    send_I2C_vals[1] = 0x04; // Continue incrementing registers 
+    I2C_send_register(IMU_REG, send_I2C_vals, 2);
+    
+
+    LCD_init();
+    LCD_clearScreen(WHITE);
+
+// **********
+    
+   
+    unsigned char check_who_am_i[1];
+    I2C_read_multiple(IMU_REG, WHO_AM_I, check_who_am_i, 1);
+}
+
 
 
