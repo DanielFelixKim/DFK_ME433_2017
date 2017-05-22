@@ -74,6 +74,9 @@ short accel_Z;
 short gyro_X;
 short gyro_Y;
 short gyro_Z;
+int MAF_accel_Z;
+int FIR_accel_Z;
+int IIR_accel_Z;
 // *****************************************************************************
 /* Application Data
   Summary:
@@ -452,7 +455,12 @@ void APP_Tasks(void) {
             accel_X = data_vals[9] << 8 | data_vals[8];
             accel_Y = data_vals[11] << 8 | data_vals[10];
             accel_Z = data_vals[13] << 8 | data_vals[12];
-            len = sprintf(dataOut, "%d,%d,%d,%d,%d,%d,%d\r\n", i, accel_X, accel_Y, accel_Z, gyro_X, gyro_Y, gyro_Z);
+            MAF_accel_Z = MAFfilter(accel_Z);
+            FIR_accel_Z = FIRfilter(accel_Z);
+            IIR_accel_Z = IIRfilter(accel_Z);
+                    
+            len = sprintf(dataOut, "%d,%d,%d,%d,%d\r\n", i, accel_Z, MAF_accel_Z, FIR_accel_Z, IIR_accel_Z);
+            //len = sprintf(dataOut, "%d,%d,%d,%d,%d,%d,%d\r\n", i, accel_X, accel_Y, accel_Z, gyro_X, gyro_Y, gyro_Z);
             
             }
             break;
