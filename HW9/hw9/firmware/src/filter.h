@@ -9,7 +9,7 @@ int FIRfilter (int in);
 int IIRfilter (int in);
 float fir_val[WINDOW_SIZE] = {.05, .15, .3, .3, .15, .05} ;
 int iirBuffer[WINDOW_SIZE] = {0, 0, 0, 0, 0, 0};
-const float iirVal = .1;
+const float iirVal = .4;
 int MAFBuffer[WINDOW_SIZE] ={0, 0, 0, 0, 0, 0};
 int FIRBuffer[WINDOW_SIZE] = {0, 0, 0, 0, 0,0};
 
