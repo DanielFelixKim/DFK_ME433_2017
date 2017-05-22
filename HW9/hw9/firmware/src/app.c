@@ -424,6 +424,7 @@ void APP_Tasks(void) {
              * The isReadComplete flag gets updated in the CDC event handler. */
 
             if (appData.isReadComplete || _CP0_GET_COUNT() - startTime > (48000000 / 20 / 10)) {
+            if (appData.isReadComplete ){
                 appData.state = APP_STATE_SCHEDULE_WRITE;
             }
             
@@ -453,7 +454,7 @@ void APP_Tasks(void) {
             accel_Z = data_vals[13] << 8 | data_vals[12];
             len = sprintf(dataOut, "%d,%d,%d,%d,%d,%d,%d\r\n", i, accel_X, accel_Y, accel_Z, gyro_X, gyro_Y, gyro_Z);
             
-            
+            }
             break;
 
 
