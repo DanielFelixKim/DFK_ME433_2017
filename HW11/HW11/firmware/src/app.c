@@ -93,8 +93,8 @@ short gyro_Y = 0;
 short gyro_Z = 0;
 short gyro_X_mouse = 0;
 short gyro_Y_mouse = 0;
-int FIR_gyro_X;
-int FIR_gyro_Y;
+int IIR_accel_X;
+int IIR_accel_Y;
 
 // *****************************************************************************
 // *****************************************************************************
@@ -338,11 +338,11 @@ void APP_Tasks(void) {
                 accel_X = data_vals[9] << 8 | data_vals[8];
                 accel_Y = data_vals[11] << 8 | data_vals[10];
                 accel_Z = data_vals[13] << 8 | data_vals[12];
-                FIR_gyro_X = FIRfilter(gyro_X *.001);
-                FIR_gyro_Y = FIRfilter(gyro_Y *.001);
-                appData.xCoordinate = (int8_t) (gyro_X *.001);
-                appData.yCoordinate = (int8_t) (gyro_Y *.001);
-
+                IIR_accel_X = IIRfilter(accel_X);
+                IIR_accel_Y = IIRfilter(accel_Y);
+                appData.xCoordinate = (int8_t) (IIR_accel_X *.0005);
+                appData.yCoordinate = (int8_t) (IIR_accel_Y *.0005);
+                
 
             if (!appData.isMouseReportSendBusy) {
                 /* This means we can send the mouse report. The
