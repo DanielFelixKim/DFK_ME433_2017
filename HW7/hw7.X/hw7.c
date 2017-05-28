@@ -143,11 +143,11 @@ int main() {
 //        sprintf(send_msg, "%d   ", jj);
 //        LCD_Draw_String(90, 16, send_msg);
         
-        sprintf(send_msg, "X:%d   ", accel_X);
+        sprintf(send_msg, "X:%f   ", gyro_X*.001);
         LCD_Draw_String(84, 80, send_msg);
 
  
-        sprintf(send_msg, "Y%d   ", accel_Y);
+        sprintf(send_msg, "Y%f   ", gyro_Y*.001);
         LCD_Draw_String(84, 100, send_msg);
         
 //        sprintf(send_msg, "%d   ", accel_X_delta);
