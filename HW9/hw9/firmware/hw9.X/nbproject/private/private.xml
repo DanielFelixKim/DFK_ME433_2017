@@ -3,16 +3,16 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
+            <file>file:/C:/Users/danielfelixkim/Documents/GitHub/ME433/DFK_ME433_2017/HW9/hw9/firmware/src/LCD9.h</file>
+            <file>file:/C:/Users/danielfelixkim/Documents/GitHub/ME433/DFK_ME433_2017/HW8/hw8/firmware/src/i2c.c</file>
+            <file>file:/C:/Users/danielfelixkim/Documents/GitHub/ME433/DFK_ME433_2017/HW9/hw9/firmware/src/filter.c</file>
             <file>file:/C:/Users/danielfelixkim/Documents/GitHub/ME433/DFK_ME433_2017/HW9/hw9/firmware/src/filter.h</file>
             <file>file:/C:/Users/danielfelixkim/Documents/GitHub/ME433/DFK_ME433_2017/HW9/hw9/firmware/src/app.h</file>
-            <file>file:/C:/Users/danielfelixkim/Documents/GitHub/ME433/DFK_ME433_2017/HW9/hw9/firmware/src/lcd.c</file>
-            <file>file:/C:/Users/danielfelixkim/Documents/GitHub/ME433/DFK_ME433_2017/HW8/hw8/firmware/src/i2c.c</file>
-            <file>file:/C:/Users/danielfelixkim/Documents/GitHub/ME433/DFK_ME433_2017/HW9/hw9/firmware/src/app.c</file>
-            <file>file:/C:/Users/danielfelixkim/Documents/GitHub/ME433/DFK_ME433_2017/HW9/hw9/firmware/src/filter.c</file>
             <file>file:/C:/Users/danielfelixkim/Documents/GitHub/ME433/DFK_ME433_2017/HW8/hw8/firmware/src/i2c.h</file>
             <file>file:/C:/Users/danielfelixkim/Documents/GitHub/ME433/DFK_ME433_2017/HW9/hw9/firmware/src/IMU9.h</file>
-            <file>file:/C:/Users/danielfelixkim/Documents/GitHub/ME433/DFK_ME433_2017/HW9/hw9/firmware/src/LCD9.h</file>
+            <file>file:/C:/Users/danielfelixkim/Documents/GitHub/ME433/DFK_ME433_2017/HW9/hw9/firmware/src/lcd.c</file>
             <file>file:/C:/Users/danielfelixkim/Documents/GitHub/ME433/DFK_ME433_2017/HW9/hw9/firmware/src/main.c</file>
+            <file>file:/C:/Users/danielfelixkim/Documents/GitHub/ME433/DFK_ME433_2017/HW9/hw9/firmware/src/app.c</file>
         </group>
     </open-files>
 </project-private>
