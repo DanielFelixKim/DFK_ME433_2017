@@ -25,7 +25,7 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <SeekBar
-            android:id="@+id/seek1"
+            android:id="@+id/seek5"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
@@ -37,7 +37,7 @@
             />
 
         <TextView
-            android:id="@+id/textView01"
+            android:id="@+id/textView05"
             android:text="initial value "
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

@@ -26,6 +26,7 @@ import android.widget.SeekBar.OnSeekBarChangeListener;
 
 import java.io.IOException;
 
+import static android.R.attr.startY;
 import static android.graphics.Color.blue;
 import static android.graphics.Color.green;
 import static android.graphics.Color.red;
@@ -40,19 +41,20 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     private Canvas canvas = new Canvas(bmp);
     private Paint paint1 = new Paint();
     private TextView mTextView;
-    SeekBar myControl;
-    TextView myTextView;
+    SeekBar camControl;
+    TextView camTextView;
     int progressChanged = 0;
     int thresh = 0;
+
     static long prevtime = 0; // for FPS calculation
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); // keeps the screen from turning off
-        myControl = (SeekBar) findViewById(R.id.seek1);
+        camControl = (SeekBar) findViewById(R.id.seek5);
 
-        myTextView = (TextView) findViewById(R.id.textView01);
+        camTextView = (TextView) findViewById(R.id.textView05);
         mTextView = (TextView) findViewById(R.id.cameraStatus);
         setMyControlListener();
         // see if the app has permission to use the camera
@@ -76,12 +78,12 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     }
 
     public int setMyControlListener() {
-        myControl.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+        camControl.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 progressChanged = progress;
-                myTextView.setText("Threshold: "+progress);
+                camTextView.setText("Threshold: "+progress);
 
 
             }
@@ -129,7 +131,9 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     public void onSurfaceTextureUpdated(SurfaceTexture surface) {
         // every time there is a new Camera preview frame
         mTextureView.getBitmap(bmp);
-
+        int com = 0;
+        int com_num = 0;
+        int y_interval = 0;
         final Canvas c = mSurfaceHolder.lockCanvas();
         if (c != null) {
              // comparison value
@@ -137,18 +141,35 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
             int[] pixels = new int[bmp.getWidth()]; // pixels[] is the RGBA data
             // which row in the bitmap to analyze to read
-            for (int startY = 0; startY < 480; startY +=10 ){
+            for (int startY = 150; startY < 250; startY +=10 ){
                 bmp.getPixels(pixels, 0, bmp.getWidth(), 0, startY, bmp.getWidth(), 1);
 
-                // in the row, see if there is more green than red
+//                // in the row, see if there is more green than red
+//                for (int i = 0; i < bmp.getWidth(); i++) {
+//                    if ((green(pixels[i]) - red(pixels[i])) > thresh) {
+//                        pixels[i] = rgb(0, 255, 0); // over write the pixel with pure green
+//
+//                    }
+                int sum_mr = 0; // the sum of the mass times the radius
+                int sum_m = 0; // the sum of the masses
                 for (int i = 0; i < bmp.getWidth(); i++) {
-                    if ((green(pixels[i]) - red(pixels[i])) > thresh) {
-                        pixels[i] = rgb(0, 255, 0); // over write the pixel with pure green
+                    if (((red(pixels[i]) - green(pixels[i])) > thresh)&&((red(pixels[i]) - blue(pixels[i])) > thresh)) {
+                        pixels[i] = rgb(1, 1, 1); // set the pixel to almost 100% black
+                        sum_m = sum_m + green(pixels[i])+red(pixels[i])+blue(pixels[i]);
+                        sum_mr = sum_mr + (green(pixels[i])+red(pixels[i])+blue(pixels[i]))*i;
                     }
+                }
+                // only use the data if there were a few pixels identified, otherwise you might get a divide by 0 error
+                if(sum_m>5){
+                    com = sum_mr / sum_m;
+                }
+                else{
+                    com = 0;
                 }
 
                 // update the row
                 bmp.setPixels(pixels, 0, bmp.getWidth(), 0, startY, bmp.getWidth(), 1);
+                canvas.drawCircle(com, startY, 5, paint1);
             }
 
         }

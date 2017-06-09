@@ -51,6 +51,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "app.h"
 #include <stdio.h>
 #include <xc.h>
+#include <math.h>
 
 // *****************************************************************************
 // *****************************************************************************
@@ -66,10 +67,13 @@ char rx[64]; // the raw data
 int rxPos = 0; // how much data has been stored
 int gotRx = 0; // the flag
 int rxVal = 0; // a place to store the int that was received
-int motor_1_direction = 0;
-int motor_2_direction = 0;
-int motor_1_speed = 0; 
-int motor_2_speed  = 0;
+int motor_1_direction = 1;
+int motor_2_direction = 1;
+int left = 0; 
+int right  = 0;
+float kp = 2;
+int max_duty = 1050; 
+int error = 0;
 // *****************************************************************************
 /* Application Data
   Summary:
@@ -422,15 +426,36 @@ void APP_Tasks(void) {
                         rx[rxPos] = 0; // end the array
                         sscanf(rx, "%d", &rxVal); // get the int out of the array
                         gotRx = 1; // set the flag
-                        motor_1_speed = rxVal; 
+                        error = rxVal - 320; // 240 means the dot is in the middle of the screen
+                        left = max_duty;
+                        right = max_duty;
+                        if (error<0) { // slow down the left motor to steer to the left
+                            if (error < -40){
+                                left = left - 50;
+                                right = right - 50;
+                            }
+                            error  = -error;
+                            left = left - (kp*error);
+                            if (left < 0){
+                                left = 0;
+                            }
+                        }
+                        else if (error > 0) { // slow down the right motor to steer to the right
+                            if (error > 40){
+                                right = right - 50;
+                                left = left - 50;
+                            }
+                            right = right -(kp*error);
+                            left = left - 50;
+                            if (right<0) {
+                                right = 0;
+                            }
+                        }
+                    
+                        OC1RS = left;
+                        OC4RS =right;
                         break; // get out of the while loop
-                    } else if ( appData.readBuffer[ii] == 'a'){
-                        motor_1_direction = 0;
-                        break;
-                    }else if ( appData.readBuffer[ii] == 'd'){
-                        motor_1_direction = 1;
-                        break;
-                    }else if (appData.readBuffer[ii] == 0) {
+                    } else if (appData.readBuffer[ii] == 0) {
                         break; // there was no newline, get out of the while loop
                     } else {
                         // save the character into the array
@@ -443,14 +468,14 @@ void APP_Tasks(void) {
                     appData.state = APP_STATE_ERROR;
                     break;
                 }
-            LATAbits.LATA1 = motor_1_direction; // direction
-            if (motor_1_speed > 1119){
-                motor_1_speed = 1119;
+//            LATAbits.LATA1 = motor_1_direction; // direction
+//            LATBbits.LATB3 = motor_2_direction; // direction
+            if (right > 1119){
+                right = 1119;
             }
-            if (motor_2_speed > 1119){
-                motor_2_speed = 1119;
+            if (left > 1119){
+                left = 1119;
             }
-            OC1RS = motor_1_speed; // velocity, 50%
             }
 
             break;
