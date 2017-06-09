@@ -72,7 +72,7 @@ int motor_2_direction = 1;
 int left = 0; 
 int right  = 0;
 float kp = 2;
-int max_duty = 1050; 
+int max_duty = 950; 
 int error = 0;
 // *****************************************************************************
 /* Application Data
@@ -430,26 +430,25 @@ void APP_Tasks(void) {
                         left = max_duty;
                         right = max_duty;
                         if (error<0) { // slow down the left motor to steer to the left
-                            if (error < -40){
-                                left = left - 50;
-                                right = right - 50;
-                            }
+                   
                             error  = -error;
                             left = left - (kp*error);
+                            right = max_duty;
                             if (left < 0){
                                 left = 0;
                             }
                         }
                         else if (error > 0) { // slow down the right motor to steer to the right
-                            if (error > 40){
-                                right = right - 50;
-                                left = left - 50;
-                            }
                             right = right -(kp*error);
-                            left = left - 50;
+                            left = max_duty;
                             if (right<0) {
                                 right = 0;
                             }
+                        }
+                        else if (rxVal == 0){
+                            right = 900;
+                            left = 900;
+                                    
                         }
                     
                         OC1RS = left;

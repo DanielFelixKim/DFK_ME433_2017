@@ -56,6 +56,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     private Paint paint1 = new Paint();
     private TextView mTextView;
     SeekBar camControl;
+    int com = 0;
     TextView camTextView;
     int progressChanged = 0;
     int thresh = 0;
@@ -176,7 +177,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     public void onSurfaceTextureUpdated(SurfaceTexture surface) {
         // every time there is a new Camera preview frame
         mTextureView.getBitmap(bmp);
-        int com = 0;
+
         int com_num = 0;
         int y_interval = 0;
         final Canvas c = mSurfaceHolder.lockCanvas();
@@ -186,7 +187,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
             int[] pixels = new int[bmp.getWidth()]; // pixels[] is the RGBA data
             // which row in the bitmap to analyze to read
-            for (int startY = 175; startY < 225; startY +=10 ){
+            for (int startY = 350; startY <450; startY +=10 ){
                 bmp.getPixels(pixels, 0, bmp.getWidth(), 0, startY, bmp.getWidth(), 1);
 
 //                // in the row, see if there is more green than red
@@ -205,11 +206,11 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                     }
                 }
                 // only use the data if there were a few pixels identified, otherwise you might get a divide by 0 error
-                if(sum_m>5){
+                if(sum_m>8){
                     com = sum_mr / sum_m;
                 }
                 else{
-                    com = 0;
+                    com = com;
                 }
 
                 // update the row
